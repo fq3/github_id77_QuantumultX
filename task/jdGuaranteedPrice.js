@@ -35,9 +35,23 @@ let cookies = [];
 $.getData('CookieJD') && cookies.push($.getData('CookieJD'));
 $.getData('CookieJD2') && cookies.push($.getData('CookieJD2'));
 
-const extraCookies = JSON.parse($.getData('CookiesJD') || '[]').map(
-  (item) => item.cookie
-);
+const extraCookies = [
+  {
+    userName: '15975229552_p',
+    cookie:
+      'pt_key=AAJgBoKCADBit1wGWFTYTo62KcIMkILubpl-wVpPr-EHhte0zWOtTCAbYc0ecrEZXChnaCFYN3A;pt_pin=15975229552_p;',
+  },
+  {
+    userName: 'wdhxZuEvXhhvCf',
+    cookie:
+      'pt_key=AAJgDAo7ADALC-lL7cXJs1ZDshFziVS2kFNf8YIvO1_YwFAP8MsLexaglRk6eKJ92sFHvyZKGWE;pt_pin=wdhxZuEvXhhvCf;',
+  },
+  {
+    userName: 'jd_7cf2d6f79a5d4',
+    cookie:
+      'pt_key=AAJgBpJ9ADD16CzufChXL1y67M95ueIGUDX7A51pgKJ7ajEQOb1LedpEcfTqzeVIJp7alagsIDs;pt_pin=jd_7cf2d6f79a5d4;',
+  },
+].map((item) => item.cookie);
 cookies = Array.from(new Set([...cookies, ...extraCookies]));
 
 !(async () => {
@@ -90,22 +104,29 @@ cookies = Array.from(new Set([...cookies, ...extraCookies]));
       console.log(`💥 获得首页面，解析超参数`);
       await getHyperParams();
       // console.log($.HyperParam)
+      console.log(`----------`);
       console.log(`🧾 获取所有价格保护列表，排除附件商品`);
       for (let page = 1; $.hasNext; page++) {
         await getApplyData(page);
       }
+      console.log(`----------`);
       console.log(`🗑 删除不符合订单`);
+      console.log(`----------`);
       let taskList = [];
       for (let order of $.orderList) {
         taskList.push(historyResultQuery(order));
       }
       await Promise.all(taskList);
+      console.log(`----------`);
       console.log(`📊 ${$.orderList.length}个商品即将申请价格保护！`);
+      console.log(`----------`);
       for (let order of $.orderList) {
         await skuApply(order);
         await $.wait(300);
       }
+      console.log(`----------`);
       console.log(`⏳ 等待申请价格保护结果...`);
+      console.log(`----------`);
       for (let i = 1; i <= 30 && Object.keys($.applyMap).length > 0; i++) {
         await $.wait(1000);
         if (i % 5 == 0) {
@@ -184,14 +205,15 @@ function getApplyData(page) {
   return new Promise((resolve, reject) => {
     $.hasNext = false;
     const { sid_hid, type_hid, forcebot } = $.HyperParam;
+    const pageSize = 5;
 
     let paramObj = {
       page,
-      pageSize: 5,
+      pageSize,
       keyWords: '',
       sid: sid_hid,
       type: type_hid,
-      forcebot: forcebot,
+      forcebot,
       token: $.token,
       feSt: $.feSt,
     };
@@ -370,10 +392,15 @@ function getApplyResult() {
       if (ajaxResultObj.applyResultVo.proApplyStatus == 'ApplySuccess') {
         //价保成功
         $.refundtotalamount += ajaxResultObj.applyResultVo.refundtotalamount;
+        console.log(
+          `📋 ${order.title} \n🟢 申请成功：￥${$.refundtotalamount}`
+        );
+        console.log(`-----`);
       } else {
         console.log(
           `📋 ${order.title} \n🔴 申请失败：${ajaxResultObj.applyResultVo.failTypeStr} \n🔴 失败类型:${ajaxResultObj.applyResultVo.failType}`
         );
+        console.log(`-----`);
       }
     }
   }
@@ -418,7 +445,7 @@ function getApplyResult() {
 
 function taskUrl(functionid, body) {
   let urlStr = selfDomain + 'rest/priceprophone/priceskusPull';
-  const { useColorApi, forcebot, useColorApi } = $.HyperParam;
+  const { useColorApi, forcebot } = $.HyperParam;
 
   if (useColorApi == 'true') {
     urlStr =
